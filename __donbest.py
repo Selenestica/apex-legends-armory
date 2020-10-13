@@ -1,5 +1,6 @@
 import requests
 import json
+from datetime import datetime
 from tabulate import tabulate
 
 
@@ -65,6 +66,11 @@ def cmd_odds(sport, metadata, session):
                 game_data["event_id"] = event_data["event_id"]
                 game_data["sport_id"] = event_data["sport_id"]
                 game_data["event_date"] = event_data["event_date"]
+                game_date = game_data["event_date"].split('T')[0]
+                game_time = game_data["event_date"].split(
+                    'T')[1].replace(':00Z', '')
+                game_time = datetime.strptime(game_time, "%H:%M")
+                game_time = game_time.strftime("%I:%M %p")
                 score_data = event_data["score"]
                 team_data = event_data["teams"]
                 team_data0 = team_data[0]
@@ -103,6 +109,10 @@ def cmd_odds(sport, metadata, session):
                     + score_data["venue_location"]
                     + "\n"
                 )
+                affiliate_names = []
+                home_spreads = []
+                away_spreads = []
+                total = []
                 for k, v in line_data.items():
                     if aff_cnt <= 3:
                         line_text = ""
@@ -111,6 +121,7 @@ def cmd_odds(sport, metadata, session):
                         moneyline_data = affiliates_data["moneyline"]
                         total_data = affiliates_data["total"]
                         total_over = total_data["total_over"]
+                        total.append(str(total_over))
                         if total_over == 0.0001:
                             total_over = "removed"
                         if moneyline_data["moneyline_home"] == 0.0001:
@@ -130,16 +141,54 @@ def cmd_odds(sport, metadata, session):
                         aff_data = affiliates_data["affiliate"]
                         aff_name = aff_data["affiliate_name"]
 
-                        line_text += str(aff_cnt) + \
-                            ". Affiliate (" + aff_name + "): "
-                        aff_cnt += 1
-                        line_text += (
-                            "Spread: [Home] "
-                            + str(spread_data["point_spread_home"])
-                            + " | "
-                            + "[Away] "
-                            + str(spread_data["point_spread_away"])
-                        )
+                        # if '-' in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) > 2:
+                        #     point_spread_home = str(
+                        #         game_data["point_spread_home"]) + "     |"
+                        # elif '-' in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) <= 2:
+                        #     point_spread_home = str(
+                        #         game_data["point_spread_home"]) + "       |"
+                        # elif '-' not in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) <= 2:
+                        #     point_spread_home = str(
+                        #         game_data["point_spread_home"]) + "        |"
+                        # elif '-' not in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) > 2:
+                        #     point_spread_home = str(
+                        #         game_data["point_spread_home"]) + "      |"
+                        # else:
+                        #     point_spread_home = str(
+                        #         game_data["point_spread_home"]) + "      |"
+
+                        # if '-' in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) > 2:
+                        #     point_spread_away = str(
+                        #         game_data["point_spread_away"]) + "     |"
+                        # elif '-' in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) <= 2:
+                        #     point_spread_away = str(
+                        #         game_data["point_spread_away"]) + "       |"
+                        # elif '-' not in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) <= 2:
+                        #     point_spread_away = str(
+                        #         game_data["point_spread_away"]) + "        |"
+                        # elif '-' not in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) > 2:
+                        #     point_spread_away = str(
+                        #         game_data["point_spread_away"]) + "      |"
+                        # else:
+                        #     point_spread_away = str(
+                        #         game_data["point_spread_away"]) + "       |"
+
+                        affiliate_names.append(aff_name)
+                        home_spreads.append(
+                            str(game_data["point_spread_home"]))
+                        away_spreads.append(
+                            str(game_data["point_spread_away"]))
+
+                        # line_text += (str(aff_cnt) +
+                        # ". Affiliate (" + aff_name + "): "
+                        # aff_cnt += 1
+                        # line_text += (
+                        #     "Spread: [Home] "
+                        #     + str(spread_data["point_spread_home"])
+                        #     + " | "
+                        #     + "[Away] "
+                        #     + str(spread_data["point_spread_away"])
+                        # )
                         line_text += (
                             " , MoneyLine: [Home] "
                             + str(moneyline_data["moneyline_home"])
@@ -151,8 +200,10 @@ def cmd_odds(sport, metadata, session):
                         line_text += "\n"
                         body_text += line_text
             msg_body = body_text
-            print(tabulate([['Alice', 24], ['Bob', 19]],
-                           headers=['Name', 'Age'], tablefmt='orgtbl'))
+            print('')
+            if "event_date" in game_data:
+                print(tabulate([[str(game_date) + " at", "[Home] " + game_data["home_name"], home_spreads[0], ''], [str(game_time), "[Away] " + game_data["away_name"], away_spreads[0], total[0]]],
+                               headers=['Time', 'Team', "Spread", "Over/Under"], tablefmt='orgtbl'))
             # print(msg_body)
     if len(msg_body) < 16:
         msg_subject = "Sports: Error"
@@ -160,4 +211,4 @@ def cmd_odds(sport, metadata, session):
     return msg_subject, msg_body
 
 
-# cmd_odds("nfl", 2, 2)
+cmd_odds("nfl", 2, 2)
