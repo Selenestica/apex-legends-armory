@@ -66,7 +66,6 @@ def cmd_odds(sport, metadata, session):
             if len(events) > 0:
                 game_data = {}
                 for event_data in events:
-                    # event_data = dict(row)
                     game_data["event_id"] = event_data["event_id"]
                     game_data["sport_id"] = event_data["sport_id"]
 

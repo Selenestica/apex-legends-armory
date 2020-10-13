@@ -41,8 +41,7 @@ def cmd_scores(sport, metadata, session):
         sport_id = 0
     # Get Rundown Sports Data
     if sport_id == 0:
-        print(0)
-        # msg_subject, msg_body = SVC_Rundown.get_notice(16, metadata)
+        msg_subject, msg_body = SVC_Rundown.get_notice(16, metadata)
     else:
         msg_subject = "Sports: " + sport_name
         url = f"https://www.corbot.us/data/scores-{sport_id}-yesterday.json"
@@ -83,7 +82,7 @@ def cmd_scores(sport, metadata, session):
                 + " | "
                 + "Away: "
                 + game_data["away_name"]
-                + "[EOL]"
+                + "\n"
             )
             body_text += (
                 "Scores:  Home: "
@@ -91,15 +90,7 @@ def cmd_scores(sport, metadata, session):
                 + " | "
                 + " Away: "
                 + str(score_data["score_away"])
-                + "[EOL]"
-            )
-            body_text += (
-                "Status: "
-                + score_data["event_status"]
-                + " | "
-                + "Details: "
-                + score_data["event_status_detail"]
-                + "[EOL]"
+                + "\n"
             )
             body_text += (
                 "Venue Name: "
@@ -107,15 +98,15 @@ def cmd_scores(sport, metadata, session):
                 + " | "
                 + "Location: "
                 + score_data["venue_location"]
-                + "[EOL]"
+                + "\n"
             )
 
-            body_text += "[EOL]"
+            body_text += "\n"
         msg_body = body_text
     if len(msg_body) < 16:
         msg_subject = "Scores: Error"
         msg_body = "There is no score data for " + sport_name + " at this time."
-    return msg_subject  # , msg_body
+    return msg_subject, msg_body
 
 
 cmd_scores("mlb", 3, 3)
