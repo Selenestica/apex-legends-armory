@@ -1,11 +1,14 @@
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 from tabulate import tabulate
 
 
 def cmd_odds(sport, metadata, session):
     # Figure Out the Sport Code
+    todays_date = datetime.now()
+    week_out = todays_date + timedelta(days=7)
     sport_code = str(sport).lower().strip()
     if (sport_code == "ncaa football") or (sport_code == "1"):
         sport_name = "NCAA Football"
@@ -43,8 +46,7 @@ def cmd_odds(sport, metadata, session):
         sport_id = 0
     # Get Rundown Odds Data
     if sport_id == 0:
-        print(0)
-        # msg_subject, msg_body = SVC_Rundown.get_notice(16, metadata)
+        msg_subject, msg_body = SVC_Rundown.get_notice(16, metadata)
     else:
         msg_subject = "Sports: " + sport_name
         url = f"https://www.corbot.us/data/odds-{sport_id}.json"
@@ -58,157 +60,129 @@ def cmd_odds(sport, metadata, session):
 
         j_data = json.loads(r.text)
         data = j_data["data"]
+        odds_tables = '\n'
         for date in data:
             events = date["events"]
-            game_data = {}
-            for row in events:
-                event_data = dict(row)
-                game_data["event_id"] = event_data["event_id"]
-                game_data["sport_id"] = event_data["sport_id"]
-                game_data["event_date"] = event_data["event_date"]
-                game_date = game_data["event_date"].split('T')[0]
-                game_time = game_data["event_date"].split(
-                    'T')[1].replace(':00Z', '')
-                game_time = datetime.strptime(game_time, "%H:%M")
-                game_time = game_time.strftime("%I:%M %p")
-                score_data = event_data["score"]
-                team_data = event_data["teams"]
-                team_data0 = team_data[0]
-                team_data1 = team_data[1]
-                score_data["event_status"] = score_data["event_status"].split("_")[
-                    1].lower().title()
-                if team_data0["is_home"] is True:
-                    game_data["home_name"] = team_data0["name"]
-                    game_data["away_name"] = team_data1["name"]
-                else:
-                    game_data["home_name"] = team_data1["name"]
-                    game_data["away_name"] = team_data0["name"]
-                line_data = event_data["lines"]
-                aff_cnt = 1
-                body_text += "\n"
-                body_text += (
-                    "Home: "
-                    + game_data["home_name"]
-                    + " | "
-                    + "Away: "
-                    + game_data["away_name"]
-                    + "\n"
-                )
-                body_text += (
-                    "Status: "
-                    + score_data["event_status"]
-                    + " | "
-                    + "Details: "
-                    + score_data["event_status_detail"]
-                    + "\n"
-                )
-                body_text += (
-                    "Location: "
-                    + score_data["venue_name"]
-                    + ", "
-                    + score_data["venue_location"]
-                    + "\n"
-                )
-                affiliate_names = []
-                home_spreads = []
-                away_spreads = []
-                total = []
-                for k, v in line_data.items():
-                    if aff_cnt <= 3:
-                        line_text = ""
-                        affiliates_data = dict(v)
-                        spread_data = affiliates_data["spread"]
-                        moneyline_data = affiliates_data["moneyline"]
-                        total_data = affiliates_data["total"]
-                        total_over = total_data["total_over"]
-                        total.append(str(total_over))
-                        if total_over == 0.0001:
-                            total_over = "removed"
-                        if moneyline_data["moneyline_home"] == 0.0001:
-                            moneyline_data["moneyline_home"] = "removed"
-                        if moneyline_data["moneyline_away"] == 0.0001:
-                            moneyline_data["moneyline_away"] = "removed"
-                        if spread_data["point_spread_home"] == 0.0001:
-                            spread_data["point_spread_home"] = "removed"
-                        if spread_data["point_spread_away"] == 0.0001:
-                            spread_data["point_spread_away"] = "removed"
-                        game_data["point_spread_home"] = spread_data[
-                            "point_spread_home"
-                        ]
-                        game_data["point_spread_away"] = spread_data[
-                            "point_spread_away"
-                        ]
-                        aff_data = affiliates_data["affiliate"]
-                        aff_name = aff_data["affiliate_name"]
+            if len(events) > 0:
+                game_data = {}
+                for event_data in events:
+                    # event_data = dict(row)
+                    game_data["event_id"] = event_data["event_id"]
+                    game_data["sport_id"] = event_data["sport_id"]
 
-                        # if '-' in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) > 2:
-                        #     point_spread_home = str(
-                        #         game_data["point_spread_home"]) + "     |"
-                        # elif '-' in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) <= 2:
-                        #     point_spread_home = str(
-                        #         game_data["point_spread_home"]) + "       |"
-                        # elif '-' not in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) <= 2:
-                        #     point_spread_home = str(
-                        #         game_data["point_spread_home"]) + "        |"
-                        # elif '-' not in str(game_data["point_spread_home"]) and len(str(game_data["point_spread_home"])) > 2:
-                        #     point_spread_home = str(
-                        #         game_data["point_spread_home"]) + "      |"
-                        # else:
-                        #     point_spread_home = str(
-                        #         game_data["point_spread_home"]) + "      |"
+                    # get date and time
+                    game_data["event_date"] = event_data["event_date"]
+                    game_date = game_data["event_date"].split('T')[0]
+                    game_date_date = datetime.strptime(game_date, "%Y-%m-%d")
+                    game_time = game_data["event_date"].split(
+                        'T')[1].replace(':00Z', '')
+                    game_time = datetime.strptime(game_time, "%H:%M")
+                    # function to see if its DST in CST
 
-                        # if '-' in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) > 2:
-                        #     point_spread_away = str(
-                        #         game_data["point_spread_away"]) + "     |"
-                        # elif '-' in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) <= 2:
-                        #     point_spread_away = str(
-                        #         game_data["point_spread_away"]) + "       |"
-                        # elif '-' not in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) <= 2:
-                        #     point_spread_away = str(
-                        #         game_data["point_spread_away"]) + "        |"
-                        # elif '-' not in str(game_data["point_spread_away"]) and len(str(game_data["point_spread_away"])) > 2:
-                        #     point_spread_away = str(
-                        #         game_data["point_spread_away"]) + "      |"
-                        # else:
-                        #     point_spread_away = str(
-                        #         game_data["point_spread_away"]) + "       |"
+                    def is_dst(time_arg, tz_arg):
+                        tz_arg = pytz.timezone(tz_arg)
+                        tz_arg_aware_date = tz_arg.localize(
+                            time_arg, is_dst=None)
+                        return tz_arg_aware_date.tzinfo._dst.seconds != 0
+                    if is_dst(game_date_date, "US/Central") == True:
+                        game_time = game_time - timedelta(hours=5)
+                    else:
+                        game_time = game_time - timedelta(hours=6)
+                    game_time = game_time.strftime("%I:%M %p")
 
-                        affiliate_names.append(aff_name)
-                        home_spreads.append(
-                            str(game_data["point_spread_home"]))
-                        away_spreads.append(
-                            str(game_data["point_spread_away"]))
+                    score_data = event_data["score"]
+                    if "teams" in event_data:
+                        team_data = event_data["teams"]
+                        team_data0 = team_data[0]
+                        team_data1 = team_data[1]
+                        if team_data0["is_home"] is True:
+                            game_data["home_name"] = team_data0["name"]
+                            game_data["away_name"] = team_data1["name"]
+                        else:
+                            game_data["home_name"] = team_data1["name"]
+                            game_data["away_name"] = team_data0["name"]
+                    else:
+                        team_data = event_data["teams_normalized"]
+                        team_data0 = team_data[0]
+                        team_data1 = team_data[1]
+                        if team_data0["is_home"] is True:
+                            game_data["home_name"] = team_data0["name"] + \
+                                ' ' + team_data0["mascot"]
+                            game_data["away_name"] = team_data1["name"] + \
+                                ' ' + team_data1["mascot"]
+                        else:
+                            game_data["home_name"] = team_data1["name"] + \
+                                ' ' + team_data1["mascot"]
+                            game_data["away_name"] = team_data0["name"] + \
+                                ' ' + team_data0["mascot"]
 
-                        # line_text += (str(aff_cnt) +
-                        # ". Affiliate (" + aff_name + "): "
-                        # aff_cnt += 1
-                        # line_text += (
-                        #     "Spread: [Home] "
-                        #     + str(spread_data["point_spread_home"])
-                        #     + " | "
-                        #     + "[Away] "
-                        #     + str(spread_data["point_spread_away"])
-                        # )
-                        line_text += (
-                            " , MoneyLine: [Home] "
-                            + str(moneyline_data["moneyline_home"])
-                            + " | "
-                            + "[Away] "
-                            + str(moneyline_data["moneyline_away"])
-                        )
-                        line_text += " | Over/Under: " + str(total_over)
-                        line_text += "\n"
-                        body_text += line_text
-            msg_body = body_text
-            print('')
-            if "event_date" in game_data:
-                print(tabulate([[str(game_date) + " at", "[Home] " + game_data["home_name"], home_spreads[0], ''], [str(game_time), "[Away] " + game_data["away_name"], away_spreads[0], total[0]]],
-                               headers=['Time', 'Team', "Spread", "Over/Under"], tablefmt='orgtbl'))
-            # print(msg_body)
-    if len(msg_body) < 16:
+                    score_data["event_status"] = score_data["event_status"].split("_")[
+                        1].lower().title()
+
+                    aff_cnt = 1
+                    if "lines" in event_data:
+                        affiliate_names = []
+                        home_spreads = []
+                        away_spreads = []
+                        total = []
+                    else:
+                        affiliate_names = ["No data"]
+                        home_spreads = ["No data"]
+                        away_spreads = ["No data"]
+                        total = ["No data"]
+                    if "lines" in event_data:
+                        line_data = event_data["lines"]
+                        for k, v in line_data.items():
+                            if aff_cnt <= 5:
+                                affiliates_data = dict(v)
+                                spread_data = affiliates_data["spread"]
+                                total_data = affiliates_data["total"]
+                                total_over = total_data["total_over"]
+
+                                # if spread or total is a pulled line
+                                if total_over == 0.0001:
+                                    total_over = "No data"
+                                if spread_data["point_spread_home"] == 0.0001:
+                                    spread_data["point_spread_home"] = "No data"
+                                if spread_data["point_spread_away"] == 0.0001:
+                                    spread_data["point_spread_away"] = "No data"
+
+                                game_data["point_spread_home"] = spread_data[
+                                    "point_spread_home"
+                                ]
+                                game_data["point_spread_away"] = spread_data[
+                                    "point_spread_away"
+                                ]
+                                aff_data = affiliates_data["affiliate"]
+                                aff_name = aff_data["affiliate_name"]
+
+                                affiliate_names.append(aff_name)
+                                aff_cnt += 1
+                                if spread_data["point_spread_home"] != "No data" and aff_cnt < 5:
+                                    home_spreads.append(
+                                        str(game_data["point_spread_home"]))
+                                else:
+                                    home_spreads.append(
+                                        str(game_data["point_spread_home"]))
+                                if spread_data["point_spread_away"] != "No data" and aff_cnt < 5:
+                                    away_spreads.append(
+                                        str(game_data["point_spread_away"]))
+                                else:
+                                    away_spreads.append(
+                                        str(game_data["point_spread_away"]))
+                                if total_over != "No data" and aff_cnt < 5:
+                                    total.append(str(total_over))
+                                else:
+                                    total.append(str(total_over))
+
+                    if game_date_date <= week_out:
+                        odds_tables += tabulate([[str(game_date) + " at", "[Home] " + game_data["home_name"], home_spreads[0], ''], [str(
+                            game_time), "[Away] " + game_data["away_name"], away_spreads[0], total[0]]], headers=['Time', 'Team', "Spread", "Over/Under"], tablefmt='orgtbl') + '\n\n'
+
+    if len(odds_tables) < 16:
         msg_subject = "Sports: Error"
-        msg_body = "There is no event data for " + sport_name + " at this time."
-    return msg_subject, msg_body
+        odds_tables = "There is no event data for " + sport_name + " at this time."
+    return msg_subject, odds_tables
 
 
 cmd_odds("nfl", 2, 2)
