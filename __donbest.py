@@ -2,7 +2,6 @@ import requests
 import json
 from datetime import datetime, timedelta
 import pytz
-from tabulate import tabulate
 
 
 def cmd_odds(sport, metadata, session):
@@ -60,7 +59,7 @@ def cmd_odds(sport, metadata, session):
 
         j_data = json.loads(r.text)
         data = j_data["data"]
-        odds_tables = '\n'
+        odds_info = '\n'
         for date in data:
             events = date["events"]
             if len(events) > 0:
@@ -175,13 +174,14 @@ def cmd_odds(sport, metadata, session):
                                     total.append(str(total_over))
 
                     if game_date_date <= week_out:
-                        odds_tables += tabulate([[str(game_date) + " at", "[Home] " + game_data["home_name"], home_spreads[0], ''], [str(
-                            game_time), "[Away] " + game_data["away_name"], away_spreads[0], total[0]]], headers=['Time', 'Team', "Spread", "Over/Under"], tablefmt='orgtbl') + '\n\n'
+                        odds_info += ("Time: " + str(game_date) + " at " + str(game_time) + "\n" + "Home: " + game_data["home_name"] + " | Spread: " + home_spreads[0] + "\n"
+                                      "Away: " + game_data["away_name"] + " | Spread: " + away_spreads[0] + "\n" + "Over/Under: " + total[0] + '\n\n')
 
-    if len(odds_tables) < 16:
+    print(odds_info)
+    if len(odds_info) < 16:
         msg_subject = "Sports: Error"
-        odds_tables = "There is no event data for " + sport_name + " at this time."
-    return msg_subject, odds_tables
+        odds_info = "There is no event data for " + sport_name + " at this time."
+    return msg_subject, odds_info
 
 
 cmd_odds("nfl", 2, 2)
