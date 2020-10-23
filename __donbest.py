@@ -45,7 +45,7 @@ def cmd_odds(sport, metadata, session):
         sport_id = 0
     # Get Rundown Odds Data
     if sport_id == 0:
-        msg_subject, msg_body = SVC_Rundown.get_notice(16, metadata)
+        msg_subject, odds_info = "dd", "847hfxwm84x7hfwd98473yhdw9843ysjdw8974yfsj8374ydsj28374ydj"
     else:
         msg_subject = "Sports: " + sport_name
         url = f"https://www.corbot.us/data/odds-{sport_id}.json"

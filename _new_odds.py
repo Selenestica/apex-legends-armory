@@ -160,4 +160,4 @@ def cmd_odds(sport, metadata, session):
     return msg_subject, msg_body
 
 
-# cmd_odds("nfl", 2, 2)
+# cmd_odds("nfl lines", 2, 2)
