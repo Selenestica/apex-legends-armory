@@ -103,6 +103,7 @@ def cmd_scores(sport, metadata, session):
 
             body_text += "\n"
         msg_body = body_text
+    print(msg_body)
     if len(msg_body) < 16:
         msg_subject = "Scores: Error"
         msg_body = "There is no score data for " + sport_name + " at this time."
