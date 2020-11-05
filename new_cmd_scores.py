@@ -1,5 +1,7 @@
 import requests
 import json
+from datetime import datetime, timedelta
+import pytz
 
 
 def cmd_scores(sport, metadata, session):
@@ -64,18 +66,30 @@ def cmd_scores(sport, metadata, session):
             game_data["sport_id"] = event_data["sport_id"]
             game_data["event_date"] = event_data["event_date"]
             score_data = event_data["score"]
-            team_data = event_data["teams"]
-            team_data0 = team_data[0]
-            team_data1 = team_data[1]
-
-            if team_data0["is_home"] is True:
-                game_data["home_name"] = team_data0["name"]
-                game_data["away_name"] = team_data1["name"]
+            if "teams" in event_data:
+                team_data = event_data["teams"]
+                team_data0 = team_data[0]
+                team_data1 = team_data[1]
+                if team_data0["is_home"] is True:
+                    game_data["home_name"] = team_data0["name"]
+                    game_data["away_name"] = team_data1["name"]
+                else:
+                    game_data["home_name"] = team_data1["name"]
+                    game_data["away_name"] = team_data0["name"]
             else:
-                game_data["home_name"] = team_data1["name"]
-                game_data["away_name"] = team_data0["name"]
-            line_data = event_data["lines"]
-            aff_cnt = 0
+                team_data = event_data["teams_normalized"]
+                team_data0 = team_data[0]
+                team_data1 = team_data[1]
+                if team_data0["is_home"] is True:
+                    game_data["home_name"] = team_data0["name"] + \
+                        ' ' + team_data0["mascot"]
+                    game_data["away_name"] = team_data1["name"] + \
+                        ' ' + team_data1["mascot"]
+                else:
+                    game_data["home_name"] = team_data1["name"] + \
+                        ' ' + team_data1["mascot"]
+                    game_data["away_name"] = team_data0["name"] + \
+                        ' ' + team_data0["mascot"]
             body_text += (
                 "Home: "
                 + game_data["home_name"]
@@ -103,11 +117,19 @@ def cmd_scores(sport, metadata, session):
 
             body_text += "\n"
         msg_body = body_text
-    print(msg_body)
     if len(msg_body) < 16:
         msg_subject = "Scores: Error"
         msg_body = "There is no score data for " + sport_name + " at this time."
-    return msg_subject, msg_body
+    print(msg_subject, msg_body)
 
 
-cmd_scores("mlb", 3, 3)
+cmd_scores("1", 2, 2)
+
+# def get_notice(notice_id, metadata):
+#     notices = Table("notices", metadata, autoload=True)
+#     qry = notices.select().where(notices.c.notice_id == notice_id).limit(1)
+#     results = qry.execute()
+#     notice_data = {}
+#     for row in results:
+#         notice_data = dict(row)
+#     return notice_data["notice_subject"], notice_data["notice_text"]
