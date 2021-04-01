@@ -24,8 +24,10 @@ paragraph19 = "Explain to me again why I cheat? he asked All the others do and n
 paragraph20 = "There was a time when he would have embraced the change that was coming In his youth, he sought adventure and the unknown, but that had been years ago He wished he could go back and learn to find the excitement that came with change but it was useless That curiosity had long left him to where he had come to loathe anything that put him out of his comfort zone"
 paragraph21 = "It was just a burger Why she understand that? She knew hed completely changed his life around her eating habits, so why she give him a break this one time? She even supposed to have found out Yes, he had promised her and yes, he had broken that promise, but still in his mind, all it had been was just a burgerWhat is the best way to get what you want? she asked He looked down at the ground knowing that she wouldnt like his answer He hesitated, knowing that the truth would only hurt How was he going to tell her that the best way for him to get what he wanted was to leave her?"
 
-paragraph_list = [paragraph1, paragraph2, paragraph3, paragraph4, paragraph5, paragraph6, paragraph7, paragraph8, paragraph9, paragraph10, paragraph11,
-                  paragraph12, paragraph13, paragraph14, paragraph15, paragraph15, paragraph16, paragraph17, paragraph18, paragraph19, paragraph20, paragraph21]
+paragraph_list = [
+    paragraph1, paragraph2, paragraph3, paragraph4, paragraph5, paragraph6, paragraph7, paragraph8, paragraph9, paragraph10, paragraph11,
+    paragraph12, paragraph13, paragraph14, paragraph15, paragraph15, paragraph16, paragraph17, paragraph18, paragraph19, paragraph20, paragraph21
+]
 paragraph_str = ""
 
 for i in paragraph_list:
